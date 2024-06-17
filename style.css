@@ -1,0 +1,110 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    padding: 0;
+    background-color: #f0f0f0;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+.styled-button {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.styled-button:hover {
+    background-color: #45a049;
+}
+
+#map {
+    height: 500px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.leaflet-control-geocoder-form {
+    width: 300px;
+    background-color: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.leaflet-control-geocoder-form input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.leaflet-control-geocoder-form button {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.leaflet-control-geocoder-form button:hover {
+    background-color: #45a049;
+}
+
+.btn-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#status {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+#alert {
+    text-align: center;
+    font-weight: bold;
+    font-size: 18px;
+    color: #333;
+}
+
+#radius-input {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+#radius-input input[type="number"] {
+    width: 80px;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+#radius-input button {
+    margin-left: 10px;
+    padding: 8px 12px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#radius-input button:hover {
+    background-color: #45a049;
+}
