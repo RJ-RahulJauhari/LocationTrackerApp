@@ -13,9 +13,9 @@ destination_info = {
     'alert_radius': 50  # Default alert radius in meters
 }
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+# @app.route('/')
+# def index():
+#     return render_template('index.html')
 
 @app.route('/set_destination', methods=['POST'])
 def set_destination():
