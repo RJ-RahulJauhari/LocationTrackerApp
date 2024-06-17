@@ -199,13 +199,24 @@
             if (destinationCircle) {
                 map.removeLayer(destinationCircle);
             }
-            destinationMarker = L.marker([latitude, longitude]).addTo(map).bindPopup('Destination').openPopup();
+            destinationMarker = L.marker([latitude, longitude], {
+                draggable: true
+            }).addTo(map).bindPopup('Destination').openPopup();
             destinationCircle = L.circle([latitude, longitude], {
                 color: '#3388ff',
                 fillColor: '#3388ff',
                 fillOpacity: 0.3,
                 radius: alertRadius,
             }).addTo(map);
+
+            // Add dragend event to update destination when marker is moved
+            destinationMarker.on('dragend', function(e) {
+                const {
+                    lat,
+                    lng
+                } = e.target.getLatLng();
+                handleDestinationSelection(lat, lng);
+            });
 
             // Send destination coordinates and alert radius to the server
             fetch('https://locationtrackerapp.onrender.com/set_destination', {
@@ -226,7 +237,8 @@
                     }
                 });
 
-            map.setView([latitude, longitude], 13);
+            // Remove map re-centering line
+            // map.setView([latitude, longitude], 13);
         }
 
         function sendLocation(latitude, longitude) {
@@ -252,7 +264,8 @@
                         map.removeLayer(marker);
                     }
                     marker = L.marker([latitude, longitude]).addTo(map).bindPopup('You are here').openPopup();
-                    map.setView([latitude, longitude], 13);
+                    // Remove map re-centering line
+                    // map.setView([latitude, longitude], 13);
                 });
         }
 
