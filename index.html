@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Geolocation Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        
+        .styled-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .styled-button:hover {
+            background-color: #45a049;
+        }
+        
+        #map {
+            height: 500px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .leaflet-control-geocoder-form {
+            width: 300px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .leaflet-control-geocoder-form input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .leaflet-control-geocoder-form button {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .leaflet-control-geocoder-form button:hover {
+            background-color: #45a049;
+        }
+        
+        .btn-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        #status {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        #alert {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: #333;
+        }
+        
+        #radius-input {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        #radius-input input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        #radius-input button {
+            margin-left: 10px;
+            padding: 8px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        #radius-input button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Geolocation Tracker</h1>
+    <div id="map"></div>
+    <div id="search-bar" class="leaflet-control leaflet-control-geocoder"></div>
+    <div class="btn-container">
+        <button id="trackButton" class="styled-button start" onclick="toggleTracking()">Start Tracking</button>
+        <label for="toggleLogging">Enable Logging:</label>
+        <input type="checkbox" id="toggleLogging" onchange="toggleLogging(this.checked)">
+    </div>
+    <div id="radius-input">
+        <label for="radius">Alert Radius (meters):</label>
+        <input type="number" id="radius" name="radius" value="50">
+        <button onclick="setAlertRadius()">Set</button>
+    </div>
+    <p id="status">Waiting for location...</p>
+    <p id="alert"></p>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script>
+        let map;
+        let marker;
+        let destinationMarker;
+        let destinationCircle;
+        let geocoder;
+        let trackingInterval;
+        let alertRadius = 50; // Default alert radius in meters
+        let trackingActive = false;
+        let loggingEnabled = false;
+
+        function initializeMap(latitude, longitude) {
+            if (!map) { // Check if map is already initialized
+                map = L.map('map').setView([latitude, longitude], 13);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                }).addTo(map);
+
+                // Add marker for user's current location
+                marker = L.marker([latitude, longitude]).addTo(map).bindPopup('You are here').openPopup();
+
+                // Initialize Geocoder control
+                geocoder = L.Control.geocoder({
+                    defaultMarkGeocode: false,
+                }).on('markgeocode', function(e) {
+                    const {
+                        latlng
+                    } = e.geocode;
+                    const {
+                        lat,
+                        lng
+                    } = latlng;
+
+                    handleDestinationSelection(lat, lng);
+                }).addTo(map);
+
+                // Add Geocoder search bar to the #search-bar element
+                document.getElementById('search-bar').appendChild(geocoder.onAdd(map));
+
+                // Add event listener to handle map clicks for dropping pins
+                map.on('click', function(e) {
+                    const {
+                        lat,
+                        lng
+                    } = e.latlng;
+                    handleDestinationSelection(lat, lng);
+                });
+            } else {
+                // Update marker position if map is already initialized
+                marker.setLatLng([latitude, longitude]).update();
+            }
+        }
+
+        function handleDestinationSelection(latitude, longitude) {
+            if (destinationMarker) {
+                map.removeLayer(destinationMarker);
+            }
+            if (destinationCircle) {
+                map.removeLayer(destinationCircle);
+            }
+            destinationMarker = L.marker([latitude, longitude]).addTo(map).bindPopup('Destination').openPopup();
+            destinationCircle = L.circle([latitude, longitude], {
+                color: '#3388ff',
+                fillColor: '#3388ff',
+                fillOpacity: 0.3,
+                radius: alertRadius,
+            }).addTo(map);
+
+            // Send destination coordinates and alert radius to the server
+            fetch('http://127.0.0.1:5000/set_destination', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        latitude: latitude,
+                        longitude: longitude,
+                        alertRadius: alertRadius // Send alert radius with destination
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (loggingEnabled) {
+                        console.log('Destination set:', data.status);
+                    }
+                });
+
+            map.setView([latitude, longitude], 13);
+        }
+
+        function sendLocation(latitude, longitude) {
+            fetch('http://127.0.0.1:5000/location', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        latitude: latitude,
+                        longitude: longitude,
+                        alertRadius: alertRadius // Send alert radius with location
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    if (loggingEnabled) {
+                        console.log(`Location sent: ${latitude} ${longitude}`);
+                    }
+                    document.getElementById('alert').innerText = data.alert;
+                    if (marker) {
+                        map.removeLayer(marker);
+                    }
+                    marker = L.marker([latitude, longitude]).addTo(map).bindPopup('You are here').openPopup();
+                    map.setView([latitude, longitude], 13);
+                });
+        }
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const {
+                        latitude,
+                        longitude
+                    } = position.coords;
+                    document.getElementById('status').innerText = `Latitude: ${latitude}, Longitude: ${longitude}`;
+                    initializeMap(latitude, longitude); // Initialize map with current location
+                    if (trackingActive) {
+                        sendLocation(latitude, longitude);
+                    }
+                }, error => {
+                    document.getElementById('status').innerText = `Error: ${error.message}`;
+                    // Default to a known location (e.g., city center) if geolocation fails
+                    initializeMap(51.505, -0.09); // Default to London
+                });
+            } else {
+                console.error('Geolocation is not supported by this browser.');
+                // Default to a known location (e.g., city center) if geolocation is not supported
+                initializeMap(51.505, -0.09); // Default to London
+            }
+        }
+
+        function toggleTracking() {
+            if (!trackingActive) {
+                startTracking();
+            } else {
+                stopTracking();
+            }
+        }
+
+        function startTracking() {
+            trackingActive = true;
+            console.log('Tracking started.');
+            document.getElementById('trackButton').innerText = 'Stop Tracking';
+
+            // Start sending location updates
+            trackingInterval = setInterval(() => {
+                getLocation();
+            }, 5000); // Update location every 5 seconds
+        }
+
+        function stopTracking() {
+            trackingActive = false;
+            console.log('Tracking stopped.');
+            document.getElementById('trackButton').innerText = 'Start Tracking';
+
+            // Clear the tracking interval
+            clearInterval(trackingInterval);
+            trackingInterval = null;
+        }
+
+        function toggleLogging(enabled) {
+            loggingEnabled = enabled;
+            const logStatus = loggingEnabled ? 'enabled' : 'disabled';
+            console.log(`Logging ${logStatus}.`);
+        }
+
+        function setAlertRadius() {
+            alertRadius = parseInt(document.getElementById('radius').value);
+            if (destinationMarker) {
+                const {
+                    lat,
+                    lng
+                } = destinationMarker.getLatLng();
+                handleDestinationSelection(lat, lng); // Update the circle with new radius
+            }
+        }
+
+        // Initialize the application
+        getLocation();
+    </script>
+</body>
+
+</html>
