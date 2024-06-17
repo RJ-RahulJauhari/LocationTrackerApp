@@ -3,7 +3,7 @@ from flask_cors import CORS
 from geopy.distance import geodesic
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://127.0.0.1:5500"}})  # Allow requests from http://127.0.0.1:5500
+CORS(app, resources={r"/*": {"origins": ["http://127.0.0.1:5500","https://locationtrackerappui.onrender.com"]}})  # Allow requests from http://127.0.0.1:5500
 
 # Your existing route definitions
 
