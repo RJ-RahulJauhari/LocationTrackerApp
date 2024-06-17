@@ -208,7 +208,7 @@
             }).addTo(map);
 
             // Send destination coordinates and alert radius to the server
-            fetch('http://https://locationtrackerapp.onrender.com/set_destination', {
+            fetch('https://locationtrackerapp.onrender.com/set_destination', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -230,7 +230,7 @@
         }
 
         function sendLocation(latitude, longitude) {
-            fetch('http://https://locationtrackerapp.onrender.com/location', {
+            fetch('https://locationtrackerapp.onrender.com/location', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
